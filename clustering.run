@@ -5,8 +5,8 @@ model clustering.mod;
 data Clustering_2.dat;
 
 param nIter default 0;
-#param maxiter := 300;
-param maxiter := 50;
+param maxiter := 300;
+#param maxiter := 10;
 
 let nCOL := 0;
 
@@ -40,9 +40,8 @@ repeat {
 	let nIter := nIter + 1;
 
 	#some debugging statements
-	print "\n(Phase 1) nIter:";
+	printf "\nNew Phase I Iteration";
 	display nIter;
-	print "\nnCOL";
 	display nCOL;
 	
 	solve PricingI;
@@ -75,9 +74,8 @@ let nIter := 0;
 repeat {
 
 	#some debugging statements
-	print "\n(Phase 2) nIter:";
+	printf "\nNew Phase II Iteration";
 	display nIter;
-	print "\nnCOL";
 	display nCOL;
 
 	if nIter == maxiter then break;
@@ -86,29 +84,32 @@ repeat {
 	
 	## Solve RMP ##
 	solve RMP;
+	
+	print "(Phase 2) RMP solution:";
+	display WeightsInClusters;
 	display lambda;
 	
-		## Retreive Optimal Dual Variables ##
-		let {i in V} price[i] := Fill[i].dual;
-		let priceclusters := Clusters.dual;
+	## Retrieve Optimal Dual Variables ##
+	let {i in V} price[i] := Fill[i].dual;
+	let priceclusters := Clusters.dual;
 	
 	## Solve Pricing Problem ##
 	solve Pricing;
 	
 	#print current reduced cost
-	print "\nCurrent MLP Reduced Cost:\n";
+	print "Current MLP Reduced Cost:";
 	display Red_Cost;
 	
+	## if reduced cost is not close to 0, try a new column
 	if Red_Cost > 0.01 then {
 	
-		## Generate Column ##
+		## Generate a column
 		let nCOL := nCOL + 1;
 		let {i in V} nbr[i, nCOL] := y[i];
 		let weights[nCOL] := sum {(i, j) in E} w[i, j] * eweights[i, j];
 		let lambda[nCOL].relax := 1;
-		
 	}
-	
+	# if reduced cost close enough to 0, we're done
 	else {
 		break
 	}
