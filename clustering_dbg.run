@@ -1,0 +1,46 @@
+reset;
+
+
+model clustering.mod;
+data Clustering_2.dat;
+
+param nIter default 0;
+#param maxiter := 300;
+param maxiter := 50;
+
+let nCOL := 0;
+
+#specify solver
+option solver gurobi;
+option gurobi_options 'outlev=1';
+
+## RMP phase 1 ##
+problem MasterI: lambda, Arti, ArtiC, Art_Weights, Fill, Clusters;
+
+## RMP phase 1 artificial reduced cost calculation ##
+problem PricingI: y, w, Art_Reduced_Cost, Feas1, Feas2, Feas3, Capacity, Capacity1, Males, Females;
+
+## RMP phase 2 ##
+problem RMP: lambda, WeightsInClusters, Fill, Clusters;
+
+## RMP phase 2 reduced cost calculation ##
+problem Pricing: y, w, Red_Cost, Feas1, Feas2, Feas3, Capacity, Capacity1, Males, Females;
+
+## initialize w/ artificial basis ##
+
+#initialize
+printf "Phase 1\n";
+solve MasterI;
+
+print "Phase I artificial solution";
+display Arti;
+display ArtiC;
+display lambda;
+display Clusters;
+display Fill;
+
+print "Solving phase I pricing problem";
+solve PricingI; #infeasible!!!!!!!!!!!!
+
+display Art_Reduced_Cost;
+

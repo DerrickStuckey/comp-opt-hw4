@@ -1,0 +1,120 @@
+reset;
+
+
+model clustering.mod;
+data Clustering_2.dat;
+
+param nIter default 0;
+#param maxiter := 300;
+param maxiter := 50;
+
+let nCOL := 0;
+
+#specify solver
+option solver gurobi;
+option gurobi_options 'outlev=1';
+
+## RMP phase 1 ##
+problem MasterI: lambda, Arti, ArtiC, Art_Weights, Fill, Clusters;
+
+## RMP phase 1 artificial reduced cost calculation ##
+problem PricingI: y, w, Art_Reduced_Cost, Feas1, Feas2, Feas3, Capacity, Capacity1, Males, Females;
+
+## RMP phase 2 ##
+problem RMP: lambda, WeightsInClusters, Fill, Clusters;
+
+## RMP phase 2 reduced cost calculation ##
+problem Pricing: y, w, Red_Cost, Feas1, Feas2, Feas3, Capacity, Capacity1, Males, Females;
+
+## initialize w/ artificial basis ##
+
+#initialize
+printf "Phase 1\n";
+solve MasterI;
+let {i in V} price[i] := Fill[i].dual;
+let priceclusters:= Clusters.dual;
+
+### Generate feasible non-artificial basis ###
+repeat {
+	
+	let nIter := nIter + 1;
+
+	#some debugging statements
+	print "\n(Phase 1) nIter:";
+	display nIter;
+	print "\nnCOL";
+	display nCOL;
+	
+	solve PricingI;
+	
+	# try 0.001 if needed
+	if Art_Reduced_Cost > 0.00001 then {
+		let nCOL := nCOL + 1;
+		let {i in V} nbr[i,nCOL] := y[i];
+		let weights[nCOL]:=sum{(i,j) in E} w[i,j]*eweights[i,j];
+		let lambda[nCOL].relax := 1;
+	}
+	
+	solve MasterI;
+	
+	if sum{i in V} Arti[i] + ArtiC <= 0.0001 then break;
+	else {
+		let {i in V} price[i] := Fill[i].dual;
+		let priceclusters := Clusters.dual;
+	}
+
+};
+
+print "Feasible non-artificial basis found";
+
+# iterate again, checking Red_Cost instead
+# when close (enough) to 0, done
+let nIter := 0;
+
+### Iterate over columns until reduced cost approaches 0 ###
+repeat {
+
+	#some debugging statements
+	print "\n(Phase 2) nIter:";
+	display nIter;
+	print "\nnCOL";
+	display nCOL;
+
+	if nIter == maxiter then break;
+	
+	let nIter := nIter + 1;
+	
+	## Solve RMP ##
+	solve RMP;
+	display lambda;
+	
+		## Retreive Optimal Dual Variables ##
+		let {i in V} price[i] := Fill[i].dual;
+		let priceclusters := Clusters.dual;
+	
+	## Solve Pricing Problem ##
+	solve Pricing;
+	
+	#print current reduced cost
+	print "\nCurrent MLP Reduced Cost:\n";
+	display Red_Cost;
+	
+	if Red_Cost > 0.01 then {
+	
+		## Generate Column ##
+		let nCOL := nCOL + 1;
+		let {i in V} nbr[i, nCOL] := y[i];
+		let weights[nCOL] := sum {(i, j) in E} w[i, j] * eweights[i, j];
+		let lambda[nCOL].relax := 1;
+		
+	}
+	
+	else {
+		break
+	}
+};
+
+print "Optimal Solution for Master Problem Found";
+
+display lambda;
+
