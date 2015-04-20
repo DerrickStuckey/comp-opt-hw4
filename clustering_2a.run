@@ -1,0 +1,21 @@
+## HW 4 (2a) Facility Location implementation
+
+reset;
+reset;
+
+model clustering_2a.mod;
+data Clustering_1.dat;
+#data Clustering_2.dat;
+
+option solver gurobi;
+
+#LP relaxation
+option relax_integrality 1;
+
+#solver options as required in assignment
+option presolve 0;
+option show_stats 1;
+
+solve;
+
+display cluster_assign;

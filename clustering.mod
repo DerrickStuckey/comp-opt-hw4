@@ -1,3 +1,5 @@
+## HW 4 (2c) Clustering implementation
+
 set K;
 set V;
 set E within {V cross V};
