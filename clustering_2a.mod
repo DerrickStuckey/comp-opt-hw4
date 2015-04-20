@@ -13,15 +13,24 @@ param gender{V} binary;
 param males;
 param females;
 var cluster_assign{V,K} binary; #matrix assigning vertices to clusters
+var edge_cluster_assign{E,K} binary; #matrix assigning edges to clusters
 
 ## Objective Function
 maximize Weights_Within:
-sum{(i,j) in E, k in K} eweights[i,j]*cluster_assign[i,k]*cluster_assign[j,k];
-
-#sum{i in V, j in V, k in K} eweights[i,j]*cluster_assign[i,k]*cluster_assign[j,k];
-
+sum{(i,j) in E, k in K} eweights[i,j]*edge_cluster_assign[i,j,k];
 
 ## Constraints
+
+# ensure consistency between cluster_assign, edge_cluster_assign
+subject to Consistent1{(i,j) in E, k in K}:
+edge_cluster_assign[i,j,k] <= cluster_assign[i,k];
+
+subject to Consistent2{(i,j) in E, k in K}:
+edge_cluster_assign[i,j,k] <= cluster_assign[j,k];
+
+subject to Consistent3{(i,j) in E, k in K}:
+edge_cluster_assign[i,j,k] >= cluster_assign[i,k] + cluster_assign[j,k] - 1;
+
 
 # ensure every cluster is of *exactly* cap nodes (uses full capacity)
 subject to Capacity{k in K}:
