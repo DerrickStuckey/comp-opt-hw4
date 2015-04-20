@@ -31,6 +31,9 @@ edge_cluster_assign[i,j,k] <= cluster_assign[j,k];
 subject to Consistent3{(i,j) in E, k in K}:
 edge_cluster_assign[i,j,k] >= cluster_assign[i,k] + cluster_assign[j,k] - 1;
 
+# ensure each node belongs to one cluster
+subject to Coverage{i in V}:
+sum{k in K} cluster_assign[i,k] = 1;
 
 # ensure every cluster is of *exactly* cap nodes (uses full capacity)
 subject to Capacity{k in K}:
