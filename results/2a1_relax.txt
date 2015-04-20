@@ -1,0 +1,25 @@
+
+234 variables, all linear
+615 constraints, all linear; 1494 nonzeros
+	15 equality constraints
+	600 inequality constraints
+1 linear objective; 198 nonzeros.
+
+Gurobi 6.0.2: optimal solution; objective 3577
+452 simplex iterations
+cluster_assign [*,*]
+:       1          2          3        :=
+1    0.333333   0.333333   0.333333
+2    0.333333   0.333333   0.333333
+3    0.333333   0.333333   0.333333
+4    0.333333   0.333333   0.333333
+5    0.333333   0.333333   0.333333
+6    0.333333   0.333333   0.333333
+7    0.333333   0.333333   0.333333
+8    0.333333   0.333333   0.333333
+9    0.333333   0.333333   0.333333
+10   0.333333   0.333333   0.333333
+11   0.333333   0.333333   0.333333
+12   0.333333   0.333333   0.333333
+;
+
