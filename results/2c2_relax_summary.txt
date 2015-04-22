@@ -1,0 +1,20 @@
+Number of columns used for Phase I:
+nCOL = 56
+
+Final Sub-Problem:
+Presolve eliminates 0 constraints and 1326 variables.
+Adjusted problem:
+252 variables, all linear
+51 constraints, all linear; 1512 nonzeros
+        51 equality constraints
+1 linear objective; 252 nonzeros.
+
+Variable types: 0 continuous, 1275 integer (1275 binary)
+
+
+Number of columns used after Phase II:
+nCOL = 252
+
+WeightsInClusters = 7356.16
+
+_total_solve_elapsed_time = 1033.24
