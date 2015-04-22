@@ -1,12 +1,12 @@
 ## HW 4 (2c) Clustering implementation
 
+# sets
 set K;
 set V;
 set E within {V cross V};
 
-
+# defined parameters
 param cap;
-
 param eweights{E} > 0;
 param gender {V} binary;
 param males;
@@ -17,14 +17,16 @@ set COLS := 1..nCOL;
 param weights{COLS} default 0;
 param nbr {V,COLS} binary; #coefficients of each column generated
 
-#Dec vars
-var Arti{V} >= 0;
-var ArtiC >= 0; #artificial var for convexity constraint
+## RMP ##
+
+# Decision variables
+var Artf_V{V} >= 0;
+var Artf_C >= 0; #Artf_Vficial var for convexity constraint
 var lambda {COLS} binary; #defined as binary but will be relaxed
 
 # When this is 0, have feasible starting solution
 maximize Art_Weights:
--(sum{i in V} Arti[i] + ArtiC);
+-(sum{i in V} Artf_V[i] + Artf_C);
 
 # RMP formulation
 maximize WeightsInClusters:
@@ -32,28 +34,27 @@ sum {j in COLS} weights[j]*lambda[j];
 
 # ensure every node covered by cluster or artificial var
 subject to Fill {i in V}:
-sum{j in COLS} nbr[i,j] * lambda[j] + Arti[i] = 1;
+sum{j in COLS} nbr[i,j] * lambda[j] + Artf_V[i] = 1;
 
-# card = function, calculates set cardinality
-# ensure K clusters exist
+# ensure exactly K clusters exist
 subject to Clusters:
-sum {j in COLS} lambda[j] + ArtiC = card(K);
+sum {j in COLS} lambda[j] + Artf_C = card(K);
 
-## sub-problem
+## Sub-Problem ## 
 
-#dual vars
+# dual vars
 param price{V} default 0.0;
 param priceclusters default 0.0;
 
-#dec vars
+# sub-problem decision vars
 var y{V} binary; #1 if column includes node
 var w{E} binary; #1 if column includes edge
 
-#artificial reduced cost
+# artificial reduced cost
 maximize Art_Reduced_Cost:
 - sum{i in V} price[i]*y[i] - priceclusters;
 
-#Pricing Problem Formulation
+# Pricing Problem Formulation
 maximize Red_Cost:
 sum{(i,j) in E} w[i,j]*eweights[i,j] - sum{i in V} price[i]*y[i] - priceclusters;
 

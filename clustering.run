@@ -1,12 +1,15 @@
+## HW 4 (2c) Clustering implementation
+
 reset;
 
-
+# load model and data file
 model clustering.mod;
+#data Clustering_1.dat;
 data Clustering_2.dat;
 
-param nIter default 0;
+# setup iteration counter and max iterations
+param cur_iter default 0;
 param maxiter := 300;
-#param maxiter := 10;
 
 let nCOL := 0;
 
@@ -14,34 +17,36 @@ let nCOL := 0;
 option solver gurobi;
 option gurobi_options 'outlev=1';
 
-## RMP phase 1 ##
-problem MasterI: lambda, Arti, ArtiC, Art_Weights, Fill, Clusters;
+## Phase 1 RMP ##
+problem MasterI: lambda, Artf_V, Artf_C, Art_Weights, Fill, Clusters;
+   option relax_integrality 1;
 
-## RMP phase 1 artificial reduced cost calculation ##
+## Phase 1 sub-problem (Artf_Vficial reduced cost calculation) ##
 problem PricingI: y, w, Art_Reduced_Cost, Feas1, Feas2, Feas3, Capacity, Capacity1, Males, Females;
+   option relax_integrality 0;
 
-## RMP phase 2 ##
+## Phase 2 RMP ##
 problem RMP: lambda, WeightsInClusters, Fill, Clusters;
+   option relax_integrality 1;
 
-## RMP phase 2 reduced cost calculation ##
+## Phase 2 sub-problem ##
 problem Pricing: y, w, Red_Cost, Feas1, Feas2, Feas3, Capacity, Capacity1, Males, Females;
+   option relax_integrality 0;
 
-## initialize w/ artificial basis ##
-
-#initialize
+## initialize w/ Artf_Vficial basis ##
 printf "Phase 1\n";
 solve MasterI;
 let {i in V} price[i] := Fill[i].dual;
 let priceclusters:= Clusters.dual;
 
-### Generate feasible non-artificial basis ###
+### Generate feasible non-Artf_Vficial basis ###
 repeat {
 	
-	let nIter := nIter + 1;
+	let cur_iter := cur_iter + 1;
 
 	#some debugging statements
-	printf "\nNew Phase I Iteration";
-	display nIter;
+	printf "\nNew Phase I Iteration\n";
+	display cur_iter;
 	display nCOL;
 	
 	solve PricingI;
@@ -56,7 +61,7 @@ repeat {
 	
 	solve MasterI;
 	
-	if sum{i in V} Arti[i] + ArtiC <= 0.0001 then break;
+	if sum{i in V} Artf_V[i] + Artf_C <= 0.0001 then break;
 	else {
 		let {i in V} price[i] := Fill[i].dual;
 		let priceclusters := Clusters.dual;
@@ -64,23 +69,25 @@ repeat {
 
 };
 
-print "Feasible non-artificial basis found";
+print "Feasible non-Artf_Vficial basis found";
+printf "Number of columns used for Phase I:\n";
+display nCOL;
 
 # iterate again, checking Red_Cost instead
 # when close (enough) to 0, done
-let nIter := 0;
+let cur_iter := 0;
 
 ### Iterate over columns until reduced cost approaches 0 ###
 repeat {
 
 	#some debugging statements
 	printf "\nNew Phase II Iteration";
-	display nIter;
+	display cur_iter;
 	display nCOL;
 
-	if nIter == maxiter then break;
+	if cur_iter == maxiter then break;
 	
-	let nIter := nIter + 1;
+	let cur_iter := cur_iter + 1;
 	
 	## Solve RMP ##
 	solve RMP;
@@ -92,8 +99,12 @@ repeat {
 	## Retrieve Optimal Dual Variables ##
 	let {i in V} price[i] := Fill[i].dual;
 	let priceclusters := Clusters.dual;
+
+	#show problem dimensionality
+	option show_stats 1;
 	
 	## Solve Pricing Problem ##
+	print "Solving sub-problem";
 	solve Pricing;
 	
 	#print current reduced cost
@@ -101,6 +112,7 @@ repeat {
 	display Red_Cost;
 	
 	## if reduced cost is not close to 0, try a new column
+	# assignment specifies 0.001 but first tested w/ 0.01
 	if Red_Cost > 0.01 then {
 	
 		## Generate a column
@@ -115,7 +127,14 @@ repeat {
 	}
 };
 
+# print final stats after global solution found
 print "Optimal Solution for Master Problem Found";
+
+printf "Number of columns used after Phase II:\n";
+display nCOL;
 
 display lambda;
 
+display WeightsInClusters;
+
+display _total_solve_elapsed_time;
