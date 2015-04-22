@@ -4,13 +4,16 @@ reset;
 reset;
 
 model clustering_2a.mod;
-data Clustering_1.dat;
-#data Clustering_2.dat;
+#data Clustering_1.dat;
+data Clustering_2.dat;
 
 option solver gurobi;
 
 #LP relaxation
-option relax_integrality 1;
+#option relax_integrality 1;
+
+#max 1 hour runtime
+option gurobi_options 'timelim=3600';
 
 #solver options as required in assignment
 option presolve 0;
