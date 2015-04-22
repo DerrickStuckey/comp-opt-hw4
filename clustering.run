@@ -4,8 +4,8 @@ reset;
 
 # load model and data file
 model clustering.mod;
-#data Clustering_1.dat;
-data Clustering_2.dat;
+data Clustering_1.dat;
+#data Clustering_2.dat;
 
 # setup iteration counter and max iterations
 param cur_iter default 0;
@@ -21,7 +21,7 @@ option gurobi_options 'outlev=1';
 problem MasterI: lambda, Artf_V, Artf_C, Art_Weights, Fill, Clusters;
    option relax_integrality 1;
 
-## Phase 1 sub-problem (Artf_Vficial reduced cost calculation) ##
+## Phase 1 sub-problem (Artificial reduced cost calculation) ##
 problem PricingI: y, w, Art_Reduced_Cost, Feas1, Feas2, Feas3, Capacity, Capacity1, Males, Females;
    option relax_integrality 0;
 
@@ -33,13 +33,13 @@ problem RMP: lambda, WeightsInClusters, Fill, Clusters;
 problem Pricing: y, w, Red_Cost, Feas1, Feas2, Feas3, Capacity, Capacity1, Males, Females;
    option relax_integrality 0;
 
-## initialize w/ Artf_Vficial basis ##
+## initialize w/ Artificial basis ##
 printf "Phase 1\n";
 solve MasterI;
 let {i in V} price[i] := Fill[i].dual;
 let priceclusters:= Clusters.dual;
 
-### Generate feasible non-Artf_Vficial basis ###
+### Generate feasible non-Artificial basis ###
 repeat {
 	
 	let cur_iter := cur_iter + 1;
@@ -69,7 +69,7 @@ repeat {
 
 };
 
-print "Feasible non-Artf_Vficial basis found";
+print "Feasible non-Artificial basis found";
 printf "Number of columns used for Phase I:\n";
 display nCOL;
 
@@ -101,6 +101,7 @@ repeat {
 	let priceclusters := Clusters.dual;
 
 	#show problem dimensionality
+	option presolve 0;
 	option show_stats 1;
 	
 	## Solve Pricing Problem ##
