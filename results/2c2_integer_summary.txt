@@ -11,12 +11,9 @@ Adjusted problem:
         51 equality constraints
 1 linear objective; 252 nonzeros.
 
-Variable types: 0 continuous, 1275 integer (1275 binary)
-
-
 Number of columns used after Phase II:
 nCOL = 252
 
 WeightsInClusters = 7356.16
 
-_total_solve_elapsed_time = 1033.24
+_total_solve_elapsed_time = 1080.84
